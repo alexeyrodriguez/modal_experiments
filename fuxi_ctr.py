@@ -1,3 +1,4 @@
+import asyncio
 from pathlib import Path
 
 import modal
@@ -86,8 +87,11 @@ def train_dnn():
     ])
 
 @app.local_entrypoint()
-def main():
-    download_criteo_data.remote()
-    train_dnn.remote()
-    train_deepfm.remote()
-    train_dcnv2.remote()
+async def main():
+    await download_criteo_data.remote.aio()
+    training = [
+        train_dnn.remote.aio(),
+        train_deepfm.remote.aio(),
+        train_dcnv2.remote.aio(),
+    ]
+    await asyncio.gather(*training)
